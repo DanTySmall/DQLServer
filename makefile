@@ -5,7 +5,7 @@
 # @version 0.1
 
 make:
-	javac Parser.java DQLServer.java
+	javac -g Parser.java DQLServer.java
 	java DQLServer
 
 
