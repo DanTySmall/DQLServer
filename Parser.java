@@ -10,7 +10,7 @@ public class Parser{
         public float value_float;
         public String name;
 
-        public Token(TokenType TT, int value_int, float valude_float, String name){
+        public Token(TokenType TT, int value_int, float value_float, String name){
            this.TT = TT;
            this.value_int = value_int;
            this.value_float = value_float;
@@ -20,8 +20,6 @@ public class Parser{
     }
 
 
-
-    // The Constructor was here
     public Parser(){
 
         // Populate Lookup Table
@@ -35,7 +33,7 @@ public class Parser{
         tokenTable.put("DELETE", TokenType.DELETE);
         tokenTable.put("DROP", TokenType.DROP);
         tokenTable.put("ALTER", TokenType.ALTER);
-        tokenTable.put("TABLE", TokenType.TABLE);
+        // tokenTable.put("TABLE", TokenType.TABLE);
         tokenTable.put("AND", TokenType.AND);
         tokenTable.put("OR", TokenType.OR);
         tokenTable.put("NOT", TokenType.NOT);
@@ -82,8 +80,33 @@ public class Parser{
 
     public TokenType lookup(String token){
 
+        // Check for Keywords and Punctuation
+        TokenType type = tokenTable.get(token);
+        // If it is not in the table it is a number(int/float) or an id
+        if(type != null){
+            return type;
+        }
 
-        return null;
+        // Check for Number
+        // TODO: Make Sure value is added to the TokenList
+        try{
+
+            Integer.parseInt(token);
+            return TokenType.INTEGER;
+
+        }catch(NumberFormatException e){
+
+            try {
+
+                Float.parseFloat(token);
+                return TokenType.FLOAT;
+            } catch (NumberFormatException f) {
+                // Not a float either
+                return TokenType.IDENTIFIER;
+            }
+
+
+        }
     }
 
     // Returns a LL of Tokens
@@ -96,31 +119,72 @@ public class Parser{
             int c;
 
             // Loops and parses the text
+            System.out.println("===== Source Code =====");
             while ((c = reader.read()) != -1){
-
+                System.out.print((char) c);
 
                 if(c == '\n' || c ==' ' || c == '\t'){ // Detect Whitespace
+
+                    // End of Word
                     String lexeme = sb.toString().toUpperCase();
-                    System.out.println("Index is : " + tokenTable.get(lexeme));
+                    if(lexeme.length() == 0) continue;
+                    TokenType type = lookup(lexeme);
+                    // Construct Node for Token List
+                    switch (type){
 
-                    // if (lexeme.equals("SELECT")){
-                    //     System.out.println(" SELECT TOKEN DETECTED");
-                    //     TokenList.add(new Token(TokenType.SELECT, 0,0,null));
-                    // }
+                        // Error: All Tokens Must Have a Type
+                        case null ->{
+                            System.out.println("Error Parsing Source Code");
+                            System.exit(1);
+                        }
+
+                        case TokenType.IDENTIFIER->{
+                            Token newToken = new Token(TokenType.IDENTIFIER,0,0.0f, lexeme);
+                            TokenList.add(newToken);
+                        }
+
+                        case TokenType.INTEGER->{
+                            Token newToken = new Token(TokenType.INTEGER, Integer.parseInt(lexeme),0.0f, null);
+                            TokenList.add(newToken);
+                        }
+
+                        case TokenType.FLOAT -> {
+                            Token newToken = new Token(TokenType.FLOAT,0,0.0f, lexeme);
+                            TokenList.add(newToken);
+                        }
+                        default->{
+                            Token newToken = new Token(type,0,0.0f, null);
+                            TokenList.add(newToken);
+                        }
 
 
-                    System.out.print('\n');
+
+                    }
+
                     sb.setLength(0);
+
+
                     continue;
                 }else{ // Add To Buffer
                     sb.append((char) c);
                 }
-                System.out.print((char) c);
             }
 
             // Check For the Last Word
             System.out.print('\n');
 
+            for(Token t: TokenList){
+                if (t.TT == TokenType.IDENTIFIER){
+                    System.out.println(t.TT + " Name: " + t.name );
+                } else if (t.TT == TokenType.INTEGER){
+                    System.out.println(t.TT + " Value: " + t.value_int);
+                }else if (t.TT == TokenType.FLOAT){
+                    System.out.println(t.TT + " Value: " + t.value_float);
+                } else {
+                    System.out.println(t.TT);
+                }
+
+            }
 
         } catch (IOException e){
             e.printStackTrace();
