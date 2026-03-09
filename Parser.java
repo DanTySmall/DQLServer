@@ -19,7 +19,7 @@ public class Parser{
         }
     }
 
-
+    // The Constructor was here
     public Parser(){
 
         // Populate Lookup Table
