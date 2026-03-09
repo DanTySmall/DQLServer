@@ -134,7 +134,8 @@ public class Parser{
             while ((c = reader.read()) != -1){
                 System.out.print((char) c);
 
-                if(c == '\n' || c ==' ' || c == '\t'){ // Detect Whitespace
+
+                if (c == '\n' || c == ' ' || c == '\t' || c == ';'){ // Detect Whitespace
 
                     // End of Word
                     String lexeme = sb.toString().toUpperCase();
@@ -171,6 +172,10 @@ public class Parser{
 
 
                     }
+                    if (c == ';') {
+                            Token newToken = new Token(TokenType.SEMICOLON,0,0.0f, null);
+                            TokenList.add(newToken);
+                    }
 
                     sb.setLength(0);
 
@@ -184,23 +189,125 @@ public class Parser{
             // Check For the Last Word
             System.out.print('\n');
 
-            for(Token t: TokenList){
-                if (t.TT == TokenType.IDENTIFIER){
-                    System.out.println(t.TT + " Name: " + t.name );
-                } else if (t.TT == TokenType.INTEGER){
-                    System.out.println(t.TT + " Value: " + t.value_int);
-                }else if (t.TT == TokenType.FLOAT){
-                    System.out.println(t.TT + " Value: " + t.value_float);
-                } else {
-                    System.out.println(t.TT);
-                }
-
-            }
 
         } catch (IOException e){
             e.printStackTrace();
         }
+        syntax(TokenList);
         return null;
+    }
+
+    // Detecting Grammar
+    public void syntax(LinkedList<Token> TokenList){
+
+        System.out.println("===== Syntax Construction=====");
+
+        if (TokenList.getFirst().TT == TokenType.SELECT){
+            selectStatement(TokenList);
+        }
+    }
+
+    public void selectStatement(LinkedList<Token> TokenList){
+
+        // Print all the Tokens
+        for(Token t: TokenList){
+            if (t.TT == TokenType.IDENTIFIER){
+                System.out.println(t.TT + " Name: " + t.name );
+            } else if (t.TT == TokenType.INTEGER){
+                System.out.println(t.TT + " Value: " + t.value_int);
+            }else if (t.TT == TokenType.FLOAT){
+                System.out.println(t.TT + " Value: " + t.value_float);
+            } else {
+                System.out.println(t.TT);
+            }
+
+        }
+
+        // Remove The Select Keyword
+        TokenList.removeFirst();
+
+        // Gathering Columns
+        ArrayList<String> columns = new ArrayList<String>();
+        if (TokenList.getFirst().TT != TokenType.IDENTIFIER && TokenList.getFirst().TT != TokenType.ASTERISK ) {
+
+            System.out.println("Error Detecting Column");
+            System.exit(1);
+
+        }
+
+        Token t = TokenList.getFirst();
+
+        if (t.TT == TokenType.ASTERISK) {
+            // This is Going to take all columns
+            System.out.println();
+            System.out.println("Taking all Columns");
+        } else {
+
+            while (t.TT == TokenType.IDENTIFIER) {
+
+                columns.add(t.name);
+
+                if (t.TT == TokenType.COMMA) {
+                    TokenList.removeFirst();
+                    t = TokenList.getFirst();
+
+                }
+
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+            }
+
+            System.out.println();
+            System.out.print("Taking columns ");
+            for (String s : columns) {
+                System.out.print(s + " ");
+            }
+
+
+        }
+
+        // From
+        if (t.TT != TokenType.FROM) {
+            System.out.println("Error: FROM Clause Not Detected");
+            System.exit(1);
+
+        }
+
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.IDENTIFIER) {
+
+            System.out.println("Error: Table Not Detected");
+            System.exit(1);
+
+        }
+
+        String table;
+        table = t.name;
+
+        System.out.println("From Table " + table);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+
+        if (t.TT != TokenType.SEMICOLON) {
+
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+
+        }
+
+       try{
+
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+         }catch(Exception e){
+
+        }
+
     }
 
 }
