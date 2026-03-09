@@ -33,7 +33,13 @@ public class Parser{
         tokenTable.put("DELETE", TokenType.DELETE);
         tokenTable.put("DROP", TokenType.DROP);
         tokenTable.put("ALTER", TokenType.ALTER);
-        // tokenTable.put("TABLE", TokenType.TABLE);
+        tokenTable.put("CREATE", TokenType.CREATE);
+        tokenTable.put("TABLE", TokenType.TABLE);
+        tokenTable.put("VALUES", TokenType.VALUES);
+        tokenTable.put("PRIMARY", TokenType.PRIMARY);
+        tokenTable.put("KEY", TokenType.KEY);
+        tokenTable.put("INT", TokenType.INT);
+        tokenTable.put("NULL", TokenType.NULL);
         tokenTable.put("AND", TokenType.AND);
         tokenTable.put("OR", TokenType.OR);
         tokenTable.put("NOT", TokenType.NOT);
@@ -63,7 +69,13 @@ public class Parser{
         DELETE,
         DROP,
         ALTER,
+        CREATE,
         TABLE,
+        VALUES,
+        PRIMARY,
+        KEY,
+        INT,
+        NULL,
         AND,
         OR,
         NOT,
@@ -88,7 +100,6 @@ public class Parser{
         }
 
         // Check for Number
-        // TODO: Make Sure value is added to the TokenList
         try{
 
             Integer.parseInt(token);
