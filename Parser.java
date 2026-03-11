@@ -207,7 +207,7 @@ public class Parser{
         }
     }
 
-    public void selectStatement(LinkedList<Token> TokenList){
+    public void printTokens(LinkedList<Token> TokenList){
 
         // Print all the Tokens
         for(Token t: TokenList){
@@ -222,6 +222,12 @@ public class Parser{
             }
 
         }
+
+    }
+
+    public void selectStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
 
         // Remove The Select Keyword
         TokenList.removeFirst();
@@ -255,7 +261,6 @@ public class Parser{
 
                 TokenList.removeFirst();
                 t = TokenList.getFirst();
-
             }
 
             System.out.println();
@@ -263,15 +268,12 @@ public class Parser{
             for (String s : columns) {
                 System.out.print(s + " ");
             }
-
-
         }
 
         // From
         if (t.TT != TokenType.FROM) {
             System.out.println("Error: FROM Clause Not Detected");
             System.exit(1);
-
         }
 
 
@@ -279,7 +281,6 @@ public class Parser{
         t = TokenList.getFirst();
 
         if (t.TT != TokenType.IDENTIFIER) {
-
             System.out.println("Error: Table Not Detected");
             System.exit(1);
 
@@ -287,17 +288,13 @@ public class Parser{
 
         String table;
         table = t.name;
-
         System.out.println("From Table " + table);
         TokenList.removeFirst();
         t = TokenList.getFirst();
 
-
         if (t.TT != TokenType.SEMICOLON) {
-
             System.out.println("Error: ; not detected");
             System.exit(1);
-
         }
 
        try{
