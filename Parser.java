@@ -39,6 +39,7 @@ public class Parser{
         tokenTable.put("PRIMARY", TokenType.PRIMARY);
         tokenTable.put("KEY", TokenType.KEY);
         tokenTable.put("INT", TokenType.INT);
+        tokenTable.put("VARCHAR", TokenType.VARCHAR);
         tokenTable.put("NULL", TokenType.NULL);
         tokenTable.put("AND", TokenType.AND);
         tokenTable.put("OR", TokenType.OR);
@@ -75,6 +76,7 @@ public class Parser{
         PRIMARY,
         KEY,
         INT,
+        VARCHAR,
         NULL,
         AND,
         OR,
@@ -204,6 +206,8 @@ public class Parser{
 
         if (TokenList.getFirst().TT == TokenType.SELECT){
             selectStatement(TokenList);
+        } else if (TokenList.getFirst().TT == TokenType.CREATE){
+            createTableStatement(TokenList);
         }
     }
 
@@ -307,4 +311,159 @@ public class Parser{
 
     }
 
+    public void createTableStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
+
+        // Remove CREATE keyword
+        TokenList.removeFirst();
+        Token t = TokenList.getFirst();
+
+        // Expect TABLE keyword
+        if (t.TT != TokenType.TABLE){
+            System.out.println("Error: TABLE not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Expect table name
+        if (t.TT != TokenType.IDENTIFIER){
+            System.out.println("Error: Table name not detected");
+            System.exit(1);
+        }
+
+        String tableName = t.name;
+        System.out.println("\nCreating table: " + tableName);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Expect opening parenthesis
+        if (t.TT != TokenType.LPAREN){
+            System.out.println("Error: ( not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Parse column definitions until closing parenthesis
+        ArrayList<String> columns = new ArrayList<String>();
+
+        while (t.TT != TokenType.RPAREN){
+
+            // Handle standalone PRIMARY KEY (col) clause
+            if (t.TT == TokenType.PRIMARY){
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT != TokenType.KEY){
+                    System.out.println("Error: KEY not detected after PRIMARY");
+                    System.exit(1);
+                }
+
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT != TokenType.LPAREN){
+                    System.out.println("Error: ( not detected after PRIMARY KEY");
+                    System.exit(1);
+                }
+
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT != TokenType.IDENTIFIER){
+                    System.out.println("Error: Column name not detected in PRIMARY KEY");
+                    System.exit(1);
+                }
+
+                System.out.println("Primary Key: " + t.name);
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT != TokenType.RPAREN){
+                    System.out.println("Error: ) not detected after PRIMARY KEY column");
+                    System.exit(1);
+                }
+
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT == TokenType.COMMA){
+                    TokenList.removeFirst();
+                    t = TokenList.getFirst();
+                }
+
+                continue;
+            }
+
+            // Expect column name
+            if (t.TT != TokenType.IDENTIFIER){
+                System.out.println("Error: Column name not detected");
+                System.exit(1);
+            }
+
+            String colName = t.name;
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            // Expect data type (e.g. INT, VARCHAR)
+            if (t.TT != TokenType.INT && t.TT != TokenType.VARCHAR){
+                System.out.println("Error: Data type not detected for column " + colName);
+                System.exit(1);
+            }
+
+            String colType = t.TT == TokenType.INT ? "INT" : "VARCHAR";
+            columns.add(colName);
+            System.out.println("Column: " + colName + " Type: " + colType);
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            // Optional inline PRIMARY KEY
+            if (t.TT == TokenType.PRIMARY){
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+
+                if (t.TT != TokenType.KEY){
+                    System.out.println("Error: KEY not detected after PRIMARY");
+                    System.exit(1);
+                }
+
+                System.out.println("Column " + colName + " is PRIMARY KEY");
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+            }
+
+            // Comma separates column definitions
+            if (t.TT == TokenType.COMMA){
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+            }
+        }
+
+        System.out.print("Columns: ");
+        for (String col : columns){
+            System.out.print(col + " ");
+        }
+        System.out.println();
+
+        // Remove closing parenthesis
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Expect semicolon
+        if (t.TT != TokenType.SEMICOLON){
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+        }
+
+        try {
+            TokenList.removeFirst();
+        } catch (Exception e){
+            // End of token list
+        }
+
+    }
 }
