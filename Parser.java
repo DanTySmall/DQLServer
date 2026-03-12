@@ -138,51 +138,56 @@ public class Parser{
             while ((c = reader.read()) != -1){
                 System.out.print((char) c);
 
+                // Check if character is punctuation that should be a separate token
+                boolean isPunctuation = (c == ',' || c == ';' || c == '(' || c == ')' ||
+                                        c == '.' || c == '*' || c == '=');
 
-                if (c == '\n' || c == ' ' || c == '\t' || c == ';'){ // Detect Whitespace
+                if (c == '\n' || c == ' ' || c == '\t' || isPunctuation){ // Detect Whitespace and Punctuation
 
-                    // End of Word
+                    // Process any buffered word first
                     String lexeme = sb.toString().toUpperCase();
-                    if(lexeme.length() == 0) continue;
-                    TokenType type = lookup(lexeme);
-                    // Construct Node for Token List
-                    switch (type){
+                    if(lexeme.length() > 0) {
+                        TokenType type = lookup(lexeme);
+                        // Construct Node for Token List
+                        switch (type){
 
-                        // Error: All Tokens Must Have a Type
-                        case null ->{
-                            System.out.println("Error Parsing Source Code");
-                            System.exit(1);
+                            // Error: All Tokens Must Have a Type
+                            case null ->{
+                                System.out.println("Error Parsing Source Code");
+                                System.exit(1);
+                            }
+
+                            case TokenType.IDENTIFIER->{
+                                Token newToken = new Token(TokenType.IDENTIFIER,0,0.0f, lexeme);
+                                TokenList.add(newToken);
+                            }
+
+                            case TokenType.INTEGER->{
+                                Token newToken = new Token(TokenType.INTEGER, Integer.parseInt(lexeme),0.0f, null);
+                                TokenList.add(newToken);
+                            }
+
+                            case TokenType.FLOAT -> {
+                                Token newToken = new Token(TokenType.FLOAT,0,0.0f, lexeme);
+                                TokenList.add(newToken);
+                            }
+                            default->{
+                                Token newToken = new Token(type,0,0.0f, null);
+                                TokenList.add(newToken);
+                            }
                         }
-
-                        case TokenType.IDENTIFIER->{
-                            Token newToken = new Token(TokenType.IDENTIFIER,0,0.0f, lexeme);
-                            TokenList.add(newToken);
-                        }
-
-                        case TokenType.INTEGER->{
-                            Token newToken = new Token(TokenType.INTEGER, Integer.parseInt(lexeme),0.0f, null);
-                            TokenList.add(newToken);
-                        }
-
-                        case TokenType.FLOAT -> {
-                            Token newToken = new Token(TokenType.FLOAT,0,0.0f, lexeme);
-                            TokenList.add(newToken);
-                        }
-                        default->{
-                            Token newToken = new Token(type,0,0.0f, null);
-                            TokenList.add(newToken);
-                        }
-
-
-
-                    }
-                    if (c == ';') {
-                            Token newToken = new Token(TokenType.SEMICOLON,0,0.0f, null);
-                            TokenList.add(newToken);
+                        sb.setLength(0);
                     }
 
-                    sb.setLength(0);
-
+                    // Now handle the punctuation character itself
+                    if (isPunctuation) {
+                        String punctStr = String.valueOf((char) c);
+                        TokenType punctType = lookup(punctStr);
+                        if (punctType != null) {
+                            Token newToken = new Token(punctType,0,0.0f, null);
+                            TokenList.add(newToken);
+                        }
+                    }
 
                     continue;
                 }else{ // Add To Buffer
@@ -552,7 +557,8 @@ public class Parser{
             System.exit(1);
         }
 
-        System.out.println("\nDropping table: " + t.name);
+        String tableName = t.name;
+        System.out.println("\nDropping table: " + tableName);
         TokenList.removeFirst();
         t = TokenList.getFirst();
 
@@ -560,6 +566,8 @@ public class Parser{
             System.out.println("Error: ; not detected");
             System.exit(1);
         }
+
+        System.out.println("Table " + tableName + " has been dropped successfully");
 
         try {
             TokenList.removeFirst();
@@ -678,12 +686,15 @@ public class Parser{
             System.exit(1);
         }
 
-        System.out.println("\nDeleting from table: " + t.name);
+        String tableName = t.name;
+        System.out.println("\nDeleting from table: " + tableName);
         TokenList.removeFirst();
         t = TokenList.getFirst();
 
         // Optional WHERE clause
+        boolean hasWhere = false;
         if (t.TT == TokenType.WHERE){
+            hasWhere = true;
             TokenList.removeFirst();
             t = TokenList.getFirst();
             parseWhere(TokenList);
@@ -693,6 +704,12 @@ public class Parser{
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
             System.exit(1);
+        }
+
+        if (hasWhere){
+            System.out.println("Rows matching WHERE condition deleted from " + tableName);
+        } else {
+            System.out.println("All rows deleted from table " + tableName);
         }
 
         try {

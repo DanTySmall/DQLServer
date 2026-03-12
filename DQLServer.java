@@ -9,6 +9,6 @@ public class DQLServer{
         // System.out.println("Howdy Partner!");
 
         Parser parser = new Parser();
-        parser.parse("file.txt");
+        parser.parse("test_statements.txt");
     }
 }
