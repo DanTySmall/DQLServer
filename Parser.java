@@ -52,6 +52,7 @@ public class Parser{
         tokenTable.put(")", TokenType.RPAREN);
         tokenTable.put(".", TokenType.PERIOD);
         tokenTable.put("*", TokenType.ASTERISK);
+        tokenTable.put("=", TokenType.EQUALS);
 
     }
 
@@ -89,6 +90,7 @@ public class Parser{
         RPAREN,
         PERIOD,
         ASTERISK,
+        EQUALS,
         EOF
     }
 
@@ -204,10 +206,16 @@ public class Parser{
 
         System.out.println("===== Syntax Construction=====");
 
-        if (TokenList.getFirst().TT == TokenType.SELECT){
-            selectStatement(TokenList);
-        } else if (TokenList.getFirst().TT == TokenType.CREATE){
-            createTableStatement(TokenList);
+        switch (TokenList.getFirst().TT){
+            case SELECT -> selectStatement(TokenList);
+            case CREATE -> createTableStatement(TokenList);
+            case DROP   -> dropTableStatement(TokenList);
+            case INSERT -> insertStatement(TokenList);
+            case DELETE -> deleteStatement(TokenList);
+            default -> {
+                System.out.println("Error: Unknown Statement");
+                System.exit(1);
+            }
         }
     }
 
@@ -296,17 +304,23 @@ public class Parser{
         TokenList.removeFirst();
         t = TokenList.getFirst();
 
+        // Optional WHERE clause
+        if (t.TT == TokenType.WHERE){
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+            parseWhere(TokenList);
+            t = TokenList.getFirst();
+        }
+
         if (t.TT != TokenType.SEMICOLON) {
             System.out.println("Error: ; not detected");
             System.exit(1);
         }
 
-       try{
-
+        try{
             TokenList.removeFirst();
             t = TokenList.getFirst();
-         }catch(Exception e){
-
+        }catch(Exception e){
         }
 
     }
@@ -465,5 +479,225 @@ public class Parser{
             // End of token list
         }
 
+    }
+
+    // Parses WHERE col = val [AND/OR col = val ...]
+    public void parseWhere(LinkedList<Token> TokenList){
+
+        Token t = TokenList.getFirst();
+
+        while (t.TT != TokenType.SEMICOLON){
+
+            // Expect column name
+            if (t.TT != TokenType.IDENTIFIER){
+                System.out.println("Error: Column name expected in WHERE clause");
+                System.exit(1);
+            }
+            String col = t.name;
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            // Expect =
+            if (t.TT != TokenType.EQUALS){
+                System.out.println("Error: = expected in WHERE clause");
+                System.exit(1);
+            }
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            // Expect value (int, float, or identifier)
+            if (t.TT == TokenType.INTEGER){
+                System.out.println("WHERE " + col + " = " + t.value_int);
+            } else if (t.TT == TokenType.FLOAT){
+                System.out.println("WHERE " + col + " = " + t.name);
+            } else if (t.TT == TokenType.IDENTIFIER){
+                System.out.println("WHERE " + col + " = " + t.name);
+            } else {
+                System.out.println("Error: Value expected in WHERE clause");
+                System.exit(1);
+            }
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            // Optional AND / OR to chain conditions
+            if (t.TT == TokenType.AND || t.TT == TokenType.OR){
+                System.out.println(t.TT);
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+            } else {
+                break;
+            }
+        }
+    }
+
+    // DROP TABLE name ;
+    public void dropTableStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
+
+        // Remove DROP keyword
+        TokenList.removeFirst();
+        Token t = TokenList.getFirst();
+
+        if (t.TT != TokenType.TABLE){
+            System.out.println("Error: TABLE not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.IDENTIFIER){
+            System.out.println("Error: Table name not detected");
+            System.exit(1);
+        }
+
+        System.out.println("\nDropping table: " + t.name);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.SEMICOLON){
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+        }
+
+        try {
+            TokenList.removeFirst();
+        } catch (Exception e){
+        }
+    }
+
+    // INSERT INTO name VALUES ( val1 , val2 , ... ) ;
+    public void insertStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
+
+        // Remove INSERT keyword
+        TokenList.removeFirst();
+        Token t = TokenList.getFirst();
+
+        if (t.TT != TokenType.INTO){
+            System.out.println("Error: INTO not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.IDENTIFIER){
+            System.out.println("Error: Table name not detected");
+            System.exit(1);
+        }
+
+        String tableName = t.name;
+        System.out.println("\nInserting into table: " + tableName);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.VALUES){
+            System.out.println("Error: VALUES not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.LPAREN){
+            System.out.println("Error: ( not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Parse values
+        ArrayList<String> values = new ArrayList<String>();
+
+        while (t.TT != TokenType.RPAREN){
+
+            if (t.TT == TokenType.INTEGER){
+                values.add(String.valueOf(t.value_int));
+            } else if (t.TT == TokenType.FLOAT){
+                values.add(t.name);
+            } else if (t.TT == TokenType.IDENTIFIER){
+                values.add(t.name);
+            } else {
+                System.out.println("Error: Value expected");
+                System.exit(1);
+            }
+
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            if (t.TT == TokenType.COMMA){
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+            }
+        }
+
+        System.out.print("Values: ");
+        for (String v : values){
+            System.out.print(v + " ");
+        }
+        System.out.println();
+
+        // Remove closing paren
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.SEMICOLON){
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+        }
+
+        try {
+            TokenList.removeFirst();
+        } catch (Exception e){
+        }
+    }
+
+    // DELETE FROM name [WHERE col = val] ;
+    public void deleteStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
+
+        // Remove DELETE keyword
+        TokenList.removeFirst();
+        Token t = TokenList.getFirst();
+
+        if (t.TT != TokenType.FROM){
+            System.out.println("Error: FROM not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.IDENTIFIER){
+            System.out.println("Error: Table name not detected");
+            System.exit(1);
+        }
+
+        System.out.println("\nDeleting from table: " + t.name);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Optional WHERE clause
+        if (t.TT == TokenType.WHERE){
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+            parseWhere(TokenList);
+            t = TokenList.getFirst();
+        }
+
+        if (t.TT != TokenType.SEMICOLON){
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+        }
+
+        try {
+            TokenList.removeFirst();
+        } catch (Exception e){
+        }
     }
 }
