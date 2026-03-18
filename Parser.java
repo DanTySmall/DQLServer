@@ -41,6 +41,7 @@ public class Parser{
         tokenTable.put("INT", TokenType.INT);
         tokenTable.put("VARCHAR", TokenType.VARCHAR);
         tokenTable.put("NULL", TokenType.NULL);
+        tokenTable.put("SET", TokenType.SET);
         tokenTable.put("AND", TokenType.AND);
         tokenTable.put("OR", TokenType.OR);
         tokenTable.put("NOT", TokenType.NOT);
@@ -79,6 +80,7 @@ public class Parser{
         INT,
         VARCHAR,
         NULL,
+        SET,
         AND,
         OR,
         NOT,
@@ -217,6 +219,7 @@ public class Parser{
             case DROP   -> dropTableStatement(TokenList);
             case INSERT -> insertStatement(TokenList);
             case DELETE -> deleteStatement(TokenList);
+            case UPDATE -> updateStatement(TokenList);
             default -> {
                 System.out.println("Error: Unknown Statement");
                 System.exit(1);
@@ -657,6 +660,92 @@ public class Parser{
             System.out.println("Error: ; not detected");
             System.exit(1);
         }
+
+        try {
+            TokenList.removeFirst();
+        } catch (Exception e){
+        }
+    }
+
+    // UPDATE name SET col = val [, col = val ...] [WHERE col = val] ;
+    public void updateStatement(LinkedList<Token> TokenList){
+
+        printTokens(TokenList);
+
+        // Remove UPDATE keyword
+        TokenList.removeFirst();
+        Token t = TokenList.getFirst();
+
+        if (t.TT != TokenType.IDENTIFIER){
+            System.out.println("Error: Table name not detected");
+            System.exit(1);
+        }
+
+        String tableName = t.name;
+        System.out.println("\nUpdating table: " + tableName);
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        if (t.TT != TokenType.SET){
+            System.out.println("Error: SET not detected");
+            System.exit(1);
+        }
+
+        TokenList.removeFirst();
+        t = TokenList.getFirst();
+
+        // Parse one or more col = val assignments
+        while (true){
+
+            if (t.TT != TokenType.IDENTIFIER){
+                System.out.println("Error: Column name expected in SET clause");
+                System.exit(1);
+            }
+            String col = t.name;
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            if (t.TT != TokenType.EQUALS){
+                System.out.println("Error: = expected in SET clause");
+                System.exit(1);
+            }
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            if (t.TT == TokenType.INTEGER){
+                System.out.println("SET " + col + " = " + t.value_int);
+            } else if (t.TT == TokenType.FLOAT){
+                System.out.println("SET " + col + " = " + t.name);
+            } else if (t.TT == TokenType.IDENTIFIER){
+                System.out.println("SET " + col + " = " + t.name);
+            } else {
+                System.out.println("Error: Value expected in SET clause");
+                System.exit(1);
+            }
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
+
+            if (t.TT == TokenType.COMMA){
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
+            } else {
+                break;
+            }
+        }
+
+        // Optional WHERE clause
+        if (t.TT == TokenType.WHERE){
+            TokenList.removeFirst();
+            parseWhere(TokenList);
+            t = TokenList.getFirst();
+        }
+
+        if (t.TT != TokenType.SEMICOLON){
+            System.out.println("Error: ; not detected");
+            System.exit(1);
+        }
+
+        System.out.println("Update on table " + tableName + " complete");
 
         try {
             TokenList.removeFirst();
