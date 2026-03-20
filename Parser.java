@@ -156,7 +156,7 @@ public class Parser{
                             // Error: All Tokens Must Have a Type
                             case null ->{
                                 System.out.println("Error Parsing Source Code");
-                                System.exit(1);
+                                throw new RuntimeException("Syntax error");
                             }
 
                             case TokenType.IDENTIFIER->{
@@ -222,7 +222,7 @@ public class Parser{
             case UPDATE -> updateStatement(TokenList);
             default -> {
                 System.out.println("Error: Unknown Statement");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
         }
     }
@@ -257,7 +257,7 @@ public class Parser{
         if (TokenList.getFirst().TT != TokenType.IDENTIFIER && TokenList.getFirst().TT != TokenType.ASTERISK ) {
 
             System.out.println("Error Detecting Column");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
 
         }
 
@@ -267,20 +267,22 @@ public class Parser{
             // This is Going to take all columns
             System.out.println();
             System.out.println("Taking all Columns");
+            TokenList.removeFirst();
+            t = TokenList.getFirst();
         } else {
 
             while (t.TT == TokenType.IDENTIFIER) {
 
                 columns.add(t.name);
+                TokenList.removeFirst();
+                t = TokenList.getFirst();
 
                 if (t.TT == TokenType.COMMA) {
                     TokenList.removeFirst();
                     t = TokenList.getFirst();
-
+                } else {
+                    break;
                 }
-
-                TokenList.removeFirst();
-                t = TokenList.getFirst();
             }
 
             System.out.println();
@@ -293,7 +295,7 @@ public class Parser{
         // From
         if (t.TT != TokenType.FROM) {
             System.out.println("Error: FROM Clause Not Detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
 
@@ -302,7 +304,7 @@ public class Parser{
 
         if (t.TT != TokenType.IDENTIFIER) {
             System.out.println("Error: Table Not Detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
 
         }
 
@@ -322,7 +324,7 @@ public class Parser{
 
         if (t.TT != TokenType.SEMICOLON) {
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         try{
@@ -344,7 +346,7 @@ public class Parser{
         // Expect TABLE keyword
         if (t.TT != TokenType.TABLE){
             System.out.println("Error: TABLE not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -353,7 +355,7 @@ public class Parser{
         // Expect table name
         if (t.TT != TokenType.IDENTIFIER){
             System.out.println("Error: Table name not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         String tableName = t.name;
@@ -364,7 +366,7 @@ public class Parser{
         // Expect opening parenthesis
         if (t.TT != TokenType.LPAREN){
             System.out.println("Error: ( not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -382,7 +384,7 @@ public class Parser{
 
                 if (t.TT != TokenType.KEY){
                     System.out.println("Error: KEY not detected after PRIMARY");
-                    System.exit(1);
+                    throw new RuntimeException("Syntax error");
                 }
 
                 TokenList.removeFirst();
@@ -390,7 +392,7 @@ public class Parser{
 
                 if (t.TT != TokenType.LPAREN){
                     System.out.println("Error: ( not detected after PRIMARY KEY");
-                    System.exit(1);
+                    throw new RuntimeException("Syntax error");
                 }
 
                 TokenList.removeFirst();
@@ -398,7 +400,7 @@ public class Parser{
 
                 if (t.TT != TokenType.IDENTIFIER){
                     System.out.println("Error: Column name not detected in PRIMARY KEY");
-                    System.exit(1);
+                    throw new RuntimeException("Syntax error");
                 }
 
                 System.out.println("Primary Key: " + t.name);
@@ -407,7 +409,7 @@ public class Parser{
 
                 if (t.TT != TokenType.RPAREN){
                     System.out.println("Error: ) not detected after PRIMARY KEY column");
-                    System.exit(1);
+                    throw new RuntimeException("Syntax error");
                 }
 
                 TokenList.removeFirst();
@@ -424,7 +426,7 @@ public class Parser{
             // Expect column name
             if (t.TT != TokenType.IDENTIFIER){
                 System.out.println("Error: Column name not detected");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
 
             String colName = t.name;
@@ -434,7 +436,7 @@ public class Parser{
             // Expect data type (e.g. INT, VARCHAR)
             if (t.TT != TokenType.INT && t.TT != TokenType.VARCHAR){
                 System.out.println("Error: Data type not detected for column " + colName);
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
 
             String colType = t.TT == TokenType.INT ? "INT" : "VARCHAR";
@@ -450,7 +452,7 @@ public class Parser{
 
                 if (t.TT != TokenType.KEY){
                     System.out.println("Error: KEY not detected after PRIMARY");
-                    System.exit(1);
+                    throw new RuntimeException("Syntax error");
                 }
 
                 System.out.println("Column " + colName + " is PRIMARY KEY");
@@ -478,7 +480,7 @@ public class Parser{
         // Expect semicolon
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         try {
@@ -499,7 +501,7 @@ public class Parser{
             // Expect column name
             if (t.TT != TokenType.IDENTIFIER){
                 System.out.println("Error: Column name expected in WHERE clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             String col = t.name;
             TokenList.removeFirst();
@@ -508,7 +510,7 @@ public class Parser{
             // Expect =
             if (t.TT != TokenType.EQUALS){
                 System.out.println("Error: = expected in WHERE clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             TokenList.removeFirst();
             t = TokenList.getFirst();
@@ -522,7 +524,7 @@ public class Parser{
                 System.out.println("WHERE " + col + " = " + t.name);
             } else {
                 System.out.println("Error: Value expected in WHERE clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             TokenList.removeFirst();
             t = TokenList.getFirst();
@@ -549,7 +551,7 @@ public class Parser{
 
         if (t.TT != TokenType.TABLE){
             System.out.println("Error: TABLE not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -557,7 +559,7 @@ public class Parser{
 
         if (t.TT != TokenType.IDENTIFIER){
             System.out.println("Error: Table name not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         String tableName = t.name;
@@ -567,7 +569,7 @@ public class Parser{
 
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         System.out.println("Table " + tableName + " has been dropped successfully");
@@ -589,7 +591,7 @@ public class Parser{
 
         if (t.TT != TokenType.INTO){
             System.out.println("Error: INTO not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -597,7 +599,7 @@ public class Parser{
 
         if (t.TT != TokenType.IDENTIFIER){
             System.out.println("Error: Table name not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         String tableName = t.name;
@@ -607,7 +609,7 @@ public class Parser{
 
         if (t.TT != TokenType.VALUES){
             System.out.println("Error: VALUES not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -615,7 +617,7 @@ public class Parser{
 
         if (t.TT != TokenType.LPAREN){
             System.out.println("Error: ( not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -634,7 +636,7 @@ public class Parser{
                 values.add(t.name);
             } else {
                 System.out.println("Error: Value expected");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
 
             TokenList.removeFirst();
@@ -658,7 +660,7 @@ public class Parser{
 
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         try {
@@ -678,7 +680,7 @@ public class Parser{
 
         if (t.TT != TokenType.IDENTIFIER){
             System.out.println("Error: Table name not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         String tableName = t.name;
@@ -688,7 +690,7 @@ public class Parser{
 
         if (t.TT != TokenType.SET){
             System.out.println("Error: SET not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -699,7 +701,7 @@ public class Parser{
 
             if (t.TT != TokenType.IDENTIFIER){
                 System.out.println("Error: Column name expected in SET clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             String col = t.name;
             TokenList.removeFirst();
@@ -707,7 +709,7 @@ public class Parser{
 
             if (t.TT != TokenType.EQUALS){
                 System.out.println("Error: = expected in SET clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             TokenList.removeFirst();
             t = TokenList.getFirst();
@@ -720,7 +722,7 @@ public class Parser{
                 System.out.println("SET " + col + " = " + t.name);
             } else {
                 System.out.println("Error: Value expected in SET clause");
-                System.exit(1);
+                throw new RuntimeException("Syntax error");
             }
             TokenList.removeFirst();
             t = TokenList.getFirst();
@@ -742,7 +744,7 @@ public class Parser{
 
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         System.out.println("Update on table " + tableName + " complete");
@@ -764,7 +766,7 @@ public class Parser{
 
         if (t.TT != TokenType.FROM){
             System.out.println("Error: FROM not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         TokenList.removeFirst();
@@ -772,7 +774,7 @@ public class Parser{
 
         if (t.TT != TokenType.IDENTIFIER){
             System.out.println("Error: Table name not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         String tableName = t.name;
@@ -792,7 +794,7 @@ public class Parser{
 
         if (t.TT != TokenType.SEMICOLON){
             System.out.println("Error: ; not detected");
-            System.exit(1);
+            throw new RuntimeException("Syntax error");
         }
 
         if (hasWhere){
